@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">GitHubClient</string>
+    <string name="error_network">Не удалось загрузить данные.\nПроверьте своё интернет соединение</string>
+    <string name="error_existing_user">Пользователь с таким логином не найден</string>
+    <string name="error_connection">Не удалось загрузить данные.\nОшибка соединения с сервером</string>
+    <string name="user_no_followers">У пользователя нет подписчиков</string>
+    <string name="user_no_name">Имя не установлено</string>
+</resources>
