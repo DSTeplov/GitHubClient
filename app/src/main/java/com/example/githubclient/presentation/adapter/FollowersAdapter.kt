@@ -8,11 +8,11 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.example.githubclient.R
 import com.example.githubclient.data.models.FollowerModel
-import kotlinx.android.synthetic.main.user_card.view.*
+import kotlinx.android.synthetic.main.item_user_card.view.*
 
 
 class FollowersAdapter(val itemClickListenerListener: AdapterClickListener) :
-    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+        RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
         private const val VIEW_TYPE_ITEM = 0
@@ -29,7 +29,7 @@ class FollowersAdapter(val itemClickListenerListener: AdapterClickListener) :
         val inflater = LayoutInflater.from(parent.context)
         return when (viewType) {
             VIEW_TYPE_ITEM -> {
-                val view = inflater.inflate(R.layout.user_card, parent, false)
+                val view = inflater.inflate(R.layout.item_user_card, parent, false)
                 FollowerViewHolder(view)
             }
             else -> {
@@ -60,6 +60,11 @@ class FollowersAdapter(val itemClickListenerListener: AdapterClickListener) :
         notifyDataSetChanged()
     }
 
+    fun setItems(list: List<FollowerModel?>) {
+        items.clear()
+        items.addAll(list)
+    }
+
     fun showProgress() {
         items.add(null)
         notifyItemInserted(items.size - 1)
@@ -70,11 +75,7 @@ class FollowersAdapter(val itemClickListenerListener: AdapterClickListener) :
         notifyItemRemoved(items.size)
     }
 
-    fun addItems(list: List<FollowerModel>) {
-        val start = items.size
-        items.addAll(list)
-        notifyItemRangeInserted(start, items.size)
-    }
+    fun getItems(): List<FollowerModel?> = items
 
     inner class FollowerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         init {
@@ -89,9 +90,9 @@ class FollowersAdapter(val itemClickListenerListener: AdapterClickListener) :
             itemView.name.text = follower.login
             val requestOptions = RequestOptions().error(R.drawable.ic_launcher_background)
             Glide.with(itemView.context)
-                .setDefaultRequestOptions(requestOptions)
-                .load(follower.avatar)
-                .into(itemView.avatar)
+                    .setDefaultRequestOptions(requestOptions)
+                    .load(follower.avatar)
+                    .into(itemView.avatar)
             itemView.setOnClickListener {
                 itemClickListenerListener.itemClick(follower)
             }

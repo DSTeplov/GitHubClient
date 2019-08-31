@@ -75,7 +75,7 @@ class MainActivityViewModel : ViewModel() {
             }
             is HttpException -> {
                 if (error.code() == 404) liveData.value =
-                    ResponseResult.ShowError(R.string.error_existing_user)
+                        ResponseResult.ShowError(R.string.error_existing_user)
                 else liveData.value = ResponseResult.ShowError(R.string.error_connection)
             }
             else -> {
@@ -88,11 +88,11 @@ class MainActivityViewModel : ViewModel() {
         when (error) {
             is UnknownHostException -> {
                 liveData.value =
-                    ResponseResult.ShowNextPageError(R.string.error_network)
+                        ResponseResult.ShowNextPageError(R.string.error_network)
             }
             else -> {
                 liveData.value =
-                    ResponseResult.ShowNextPageError(R.string.error_connection)
+                        ResponseResult.ShowNextPageError(R.string.error_connection)
             }
         }
     }

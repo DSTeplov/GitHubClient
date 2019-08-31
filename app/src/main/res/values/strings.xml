@@ -5,4 +5,5 @@
     <string name="error_connection">Не удалось загрузить данные.\nОшибка соединения с сервером</string>
     <string name="user_no_followers">У пользователя нет подписчиков</string>
     <string name="user_no_name">Имя не установлено</string>
+    <string name="search_hint">Введите логин…</string>
 </resources>

@@ -7,6 +7,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.util.DiffUtil
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.SearchView
@@ -17,10 +18,11 @@ import com.bumptech.glide.request.RequestOptions
 import com.example.githubclient.R
 import com.example.githubclient.data.models.FollowerModel
 import com.example.githubclient.data.models.UserInfo
+import com.example.githubclient.presentation.adapter.DiffCallback
 import com.example.githubclient.presentation.adapter.FollowersAdapter
+import com.example.githubclient.presentation.adapter.ItemDecorator
 import com.example.githubclient.presentation.viewmodels.MainActivityViewModel
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.user_card.*
 
 
 class MainActivity : AppCompatActivity(), FollowersAdapter.AdapterClickListener {
@@ -63,9 +65,20 @@ class MainActivity : AppCompatActivity(), FollowersAdapter.AdapterClickListener 
                 is ResponseResult.ShowFollowersList -> {
                     followersList.visibility = View.VISIBLE
                     errorMessage.visibility = View.GONE
-                    adapter.update(result.list)
+                    val diff = DiffCallback(adapter.getItems(), result.list)
+                    val diffResult = DiffUtil.calculateDiff(diff)
+                    adapter.setItems(result.list)
+                    diffResult.dispatchUpdatesTo(adapter)
                 }
-                is ResponseResult.ShowNextPage -> adapter.addItems(result.list)
+                is ResponseResult.ShowNextPage -> {
+                    val sumList = ArrayList<FollowerModel?>()
+                    sumList.addAll(adapter.getItems())
+                    sumList.addAll(result.list)
+                    val diff = DiffCallback(adapter.getItems(), sumList)
+                    val diffResult = DiffUtil.calculateDiff(diff)
+                    adapter.setItems(sumList)
+                    diffResult.dispatchUpdatesTo(adapter)
+                }
                 is ResponseResult.ShowNextPageProgress -> adapter.showProgress()
                 is ResponseResult.HideNextPageProgress -> adapter.hideProgress()
                 is ResponseResult.ShowEmptyFollowers -> showErrorMessage(result.message)
@@ -107,6 +120,8 @@ class MainActivity : AppCompatActivity(), FollowersAdapter.AdapterClickListener 
         val layoutManager = LinearLayoutManager(this)
         followersList.layoutManager = layoutManager
         adapter = FollowersAdapter(this)
+        val itemDecorator = ItemDecorator(30)
+        followersList.addItemDecoration(itemDecorator)
         followersList.adapter = adapter
         followersList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             var visibleItems: Int = 0
@@ -137,6 +152,7 @@ class MainActivity : AppCompatActivity(), FollowersAdapter.AdapterClickListener 
                 }
                 return false
             }
+
             override fun onQueryTextChange(p0: String?): Boolean {
                 return false
             }
@@ -147,14 +163,14 @@ class MainActivity : AppCompatActivity(), FollowersAdapter.AdapterClickListener 
         userCard.visibility = View.VISIBLE
         errorMessage.visibility = View.GONE
         if (user.name.isNullOrEmpty())
-            name.text = getString(com.example.githubclient.R.string.user_no_name)
+            nameUser.text = getString(com.example.githubclient.R.string.user_no_name)
         else
-            name.text = user.name
+            nameUser.text = user.name
         val requestOptions = RequestOptions().error(R.drawable.ic_launcher_background)
         Glide.with(this)
-            .setDefaultRequestOptions(requestOptions)
-            .load(user.avatar)
-            .into(avatar)
+                .setDefaultRequestOptions(requestOptions)
+                .load(user.avatar)
+                .into(avatarUser)
     }
 
     private fun showErrorMessage(message: Int) {
