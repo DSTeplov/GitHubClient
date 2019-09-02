@@ -13,7 +13,7 @@ import java.net.UnknownHostException
 
 class MainActivityViewModel : ViewModel() {
     private val liveData = MutableLiveData<ResponseResult>()
-    private var viewModelJob = Job()
+    private var viewModelJob = SupervisorJob()
     private val viewModelScope = CoroutineScope(Dispatchers.Main + viewModelJob)
     private var repository: Repository = RepositoryImpl()
     private var loading: Boolean = false
@@ -24,24 +24,20 @@ class MainActivityViewModel : ViewModel() {
         loadingPage = 1
         lastPage = false
         liveData.value = ResponseResult.ShowProgress
-        viewModelScope.launch {
-            try {
-                val user = withContext(Dispatchers.IO) { repository.getUserInfo(login) }
-                val list = withContext(Dispatchers.IO) { repository.getUserFollowers(login, loadingPage) }
-                val userResult = user.await()
-                val followersResult = list.await()
-                liveData.value = ResponseResult.ShowUserInfo(userResult)
-                if (followersResult.isEmpty()) {
-                    lastPage = true
-                    liveData.value = ResponseResult.ShowEmptyFollowers(R.string.user_no_followers)
-                } else {
-                    liveData.value = ResponseResult.ShowFollowersList(followersResult)
-                }
-            } catch (e: Exception) {
-                handleError(e)
-            } finally {
-                liveData.value = ResponseResult.HideProgress
+
+        val exceptionHandler = CoroutineExceptionHandler { _, throwable -> loadInfoError(throwable) }
+        viewModelScope.launch(exceptionHandler) {
+            val userResult = withContext(Dispatchers.IO) { repository.getUserInfo(login) }
+            val followersResult =
+                withContext(Dispatchers.IO) { repository.getUserFollowers(login, loadingPage) }
+            liveData.value = ResponseResult.ShowUserInfo(userResult)
+            if (followersResult.isEmpty()) {
+                lastPage = true
+                liveData.value = ResponseResult.ShowEmptyFollowers(R.string.user_no_followers)
+            } else {
+                liveData.value = ResponseResult.ShowFollowersList(followersResult)
             }
+            liveData.value = ResponseResult.HideProgress
         }
     }
 
@@ -50,32 +46,39 @@ class MainActivityViewModel : ViewModel() {
         liveData.value = ResponseResult.ShowNextPageProgress
         loading = true
         loadingPage++
-        viewModelScope.launch {
-            try {
-                val followersResult = withContext(Dispatchers.IO) {
-                    repository.getUserFollowers(login, loadingPage)
-                }.await()
-                liveData.value = ResponseResult.HideNextPageProgress
-                if (followersResult.isEmpty()) lastPage = true
-                else liveData.value = ResponseResult.ShowNextPage(followersResult)
-            } catch (e: Exception) {
-                loadingPage--
-                liveData.value = ResponseResult.HideNextPageProgress
-                handleNextPageError(e)
-            } finally {
-                loading = false
+
+        val exceptionHandler = CoroutineExceptionHandler { _, throwable -> nextPageError(throwable) }
+        viewModelScope.launch(exceptionHandler) {
+            val followersResult = withContext(Dispatchers.IO) {
+                repository.getUserFollowers(login, loadingPage)
             }
+            liveData.value = ResponseResult.HideNextPageProgress
+            if (followersResult.isEmpty()) lastPage = true
+            else liveData.value = ResponseResult.ShowNextPage(followersResult)
+            loading = false
         }
     }
 
-    private fun handleError(error: Exception) {
+    private fun loadInfoError(throwable: Throwable) {
+        handleError(throwable)
+        liveData.value = ResponseResult.HideProgress
+    }
+
+    private fun nextPageError(throwable: Throwable) {
+        loadingPage--
+        liveData.value = ResponseResult.HideNextPageProgress
+        handleNextPageError(throwable)
+        loading = false
+    }
+
+    private fun handleError(error: Throwable) {
         when (error) {
             is UnknownHostException -> {
                 liveData.value = ResponseResult.ShowError(R.string.error_network)
             }
             is HttpException -> {
                 if (error.code() == 404) liveData.value =
-                        ResponseResult.ShowError(R.string.error_existing_user)
+                    ResponseResult.ShowError(R.string.error_existing_user)
                 else liveData.value = ResponseResult.ShowError(R.string.error_connection)
             }
             else -> {
@@ -84,15 +87,15 @@ class MainActivityViewModel : ViewModel() {
         }
     }
 
-    private fun handleNextPageError(error: Exception) {
+    private fun handleNextPageError(error: Throwable) {
         when (error) {
             is UnknownHostException -> {
                 liveData.value =
-                        ResponseResult.ShowNextPageError(R.string.error_network)
+                    ResponseResult.ShowNextPageError(R.string.error_network)
             }
             else -> {
                 liveData.value =
-                        ResponseResult.ShowNextPageError(R.string.error_connection)
+                    ResponseResult.ShowNextPageError(R.string.error_connection)
             }
         }
     }
@@ -103,7 +106,7 @@ class MainActivityViewModel : ViewModel() {
 
     override fun onCleared() {
         super.onCleared()
-        viewModelScope.coroutineContext.cancelChildren()
+        viewModelJob.cancel()
     }
 
 }

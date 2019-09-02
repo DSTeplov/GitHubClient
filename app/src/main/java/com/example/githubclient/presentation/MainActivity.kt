@@ -25,7 +25,7 @@ import com.example.githubclient.presentation.viewmodels.MainActivityViewModel
 import kotlinx.android.synthetic.main.activity_main.*
 
 
-class MainActivity : AppCompatActivity(), FollowersAdapter.AdapterClickListener {
+class MainActivity : AppCompatActivity() {
     companion object {
         const val ARG_LOGIN = "login_arg"
         const val ARG_NUMBER = "number_arg"
@@ -62,23 +62,8 @@ class MainActivity : AppCompatActivity(), FollowersAdapter.AdapterClickListener 
                 is ResponseResult.ShowProgress -> progressBar.visibility = View.VISIBLE
                 is ResponseResult.HideProgress -> progressBar.visibility = View.GONE
                 is ResponseResult.ShowUserInfo -> setupUserCard(result.user)
-                is ResponseResult.ShowFollowersList -> {
-                    followersList.visibility = View.VISIBLE
-                    errorMessage.visibility = View.GONE
-                    val diff = DiffCallback(adapter.getItems(), result.list)
-                    val diffResult = DiffUtil.calculateDiff(diff)
-                    adapter.setItems(result.list)
-                    diffResult.dispatchUpdatesTo(adapter)
-                }
-                is ResponseResult.ShowNextPage -> {
-                    val sumList = ArrayList<FollowerModel?>()
-                    sumList.addAll(adapter.getItems())
-                    sumList.addAll(result.list)
-                    val diff = DiffCallback(adapter.getItems(), sumList)
-                    val diffResult = DiffUtil.calculateDiff(diff)
-                    adapter.setItems(sumList)
-                    diffResult.dispatchUpdatesTo(adapter)
-                }
+                is ResponseResult.ShowFollowersList -> showFollowersList(result.list)
+                is ResponseResult.ShowNextPage -> showNextPage(result.list)
                 is ResponseResult.ShowNextPageProgress -> adapter.showProgress()
                 is ResponseResult.HideNextPageProgress -> adapter.hideProgress()
                 is ResponseResult.ShowEmptyFollowers -> showErrorMessage(result.message)
@@ -119,7 +104,7 @@ class MainActivity : AppCompatActivity(), FollowersAdapter.AdapterClickListener 
     private fun initList() {
         val layoutManager = LinearLayoutManager(this)
         followersList.layoutManager = layoutManager
-        adapter = FollowersAdapter(this)
+        adapter = FollowersAdapter(::onClick)
         val itemDecorator = ItemDecorator(30)
         followersList.addItemDecoration(itemDecorator)
         followersList.adapter = adapter
@@ -168,9 +153,28 @@ class MainActivity : AppCompatActivity(), FollowersAdapter.AdapterClickListener 
             nameUser.text = user.name
         val requestOptions = RequestOptions().error(R.drawable.ic_launcher_background)
         Glide.with(this)
-                .setDefaultRequestOptions(requestOptions)
-                .load(user.avatar)
-                .into(avatarUser)
+            .setDefaultRequestOptions(requestOptions)
+            .load(user.avatar)
+            .into(avatarUser)
+    }
+
+    private fun showFollowersList(list: List<FollowerModel>) {
+        followersList.visibility = View.VISIBLE
+        errorMessage.visibility = View.GONE
+        val diff = DiffCallback(adapter.getItems(), list)
+        val diffResult = DiffUtil.calculateDiff(diff)
+        adapter.setItems(list)
+        diffResult.dispatchUpdatesTo(adapter)
+    }
+
+    private fun showNextPage(list: List<FollowerModel>) {
+        val sumList = ArrayList<FollowerModel?>()
+        sumList.addAll(adapter.getItems())
+        sumList.addAll(list)
+        val diff = DiffCallback(adapter.getItems(), sumList)
+        val diffResult = DiffUtil.calculateDiff(diff)
+        adapter.setItems(sumList)
+        diffResult.dispatchUpdatesTo(adapter)
     }
 
     private fun showErrorMessage(message: Int) {
@@ -179,7 +183,7 @@ class MainActivity : AppCompatActivity(), FollowersAdapter.AdapterClickListener 
         errorMessage.text = getString(message)
     }
 
-    override fun itemClick(item: FollowerModel) {
+    private fun onClick(item: FollowerModel) {
         number = intent.getIntExtra(ARG_NUMBER, 1) + 1
         startNewActivity(this, item.login, number)
     }

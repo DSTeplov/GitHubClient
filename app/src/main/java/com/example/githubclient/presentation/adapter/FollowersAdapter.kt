@@ -11,16 +11,12 @@ import com.example.githubclient.data.models.FollowerModel
 import kotlinx.android.synthetic.main.item_user_card.view.*
 
 
-class FollowersAdapter(val itemClickListenerListener: AdapterClickListener) :
-        RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class FollowersAdapter(private val onClick: (item: FollowerModel) -> Unit) :
+    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
         private const val VIEW_TYPE_ITEM = 0
         private const val VIEW_TYPE_PROGRESS = 1
-    }
-
-    interface AdapterClickListener {
-        fun itemClick(item: FollowerModel)
     }
 
     private val items = ArrayList<FollowerModel?>()
@@ -82,7 +78,7 @@ class FollowersAdapter(val itemClickListenerListener: AdapterClickListener) :
             itemView.setOnClickListener {
                 val position = adapterPosition
                 if (position != RecyclerView.NO_POSITION)
-                    itemClickListenerListener.itemClick(items[adapterPosition]!!)
+                    onClick(items[position]!!)
             }
         }
 
@@ -90,12 +86,9 @@ class FollowersAdapter(val itemClickListenerListener: AdapterClickListener) :
             itemView.name.text = follower.login
             val requestOptions = RequestOptions().error(R.drawable.ic_launcher_background)
             Glide.with(itemView.context)
-                    .setDefaultRequestOptions(requestOptions)
-                    .load(follower.avatar)
-                    .into(itemView.avatar)
-            itemView.setOnClickListener {
-                itemClickListenerListener.itemClick(follower)
-            }
+                .setDefaultRequestOptions(requestOptions)
+                .load(follower.avatar)
+                .into(itemView.avatar)
         }
     }
 
