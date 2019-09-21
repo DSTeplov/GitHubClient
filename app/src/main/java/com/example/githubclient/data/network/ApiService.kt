@@ -9,8 +9,8 @@ import retrofit2.http.Query
 
 interface ApiService {
     @GET("users/{user}")
-    fun getUserInfo(@Path("user") user: String): Deferred<UserInfo>
+    suspend fun getUserInfo(@Path("user") user: String): UserInfo
 
     @GET("users/{user}/followers")
-    fun getUserFollowers(@Path("user") user: String, @Query("page") page: Int?): Deferred<List<FollowerModel>>
+    suspend fun getUserFollowers(@Path("user") user: String, @Query("page") page: Int?): List<FollowerModel>
 }
