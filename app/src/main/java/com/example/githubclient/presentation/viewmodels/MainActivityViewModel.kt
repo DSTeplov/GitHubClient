@@ -5,17 +5,15 @@ import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
 import com.example.githubclient.R
 import com.example.githubclient.data.repositories.Repository
-import com.example.githubclient.data.repositories.RepositoryImpl
 import com.example.githubclient.presentation.ResponseResult
 import kotlinx.coroutines.*
 import retrofit2.HttpException
 import java.net.UnknownHostException
 
-class MainActivityViewModel : ViewModel() {
+class MainActivityViewModel(private val repository: Repository) : ViewModel() {
     private val liveData = MutableLiveData<ResponseResult>()
     private var viewModelJob = SupervisorJob()
     private val viewModelScope = CoroutineScope(Dispatchers.Main + viewModelJob)
-    private var repository: Repository = RepositoryImpl()
     private var loading: Boolean = false
     private var lastPage: Boolean = false
     private var loadingPage = 1
@@ -106,7 +104,7 @@ class MainActivityViewModel : ViewModel() {
 
     override fun onCleared() {
         super.onCleared()
-        viewModelJob.cancel()
+        viewModelScope.coroutineContext.cancelChildren()
     }
 
 }

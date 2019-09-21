@@ -1,7 +1,6 @@
 package com.example.githubclient.presentation
 
 import android.arch.lifecycle.Observer
-import android.arch.lifecycle.ViewModelProviders
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -23,6 +22,7 @@ import com.example.githubclient.presentation.adapter.FollowersAdapter
 import com.example.githubclient.presentation.adapter.ItemDecorator
 import com.example.githubclient.presentation.viewmodels.MainActivityViewModel
 import kotlinx.android.synthetic.main.activity_main.*
+import org.koin.android.viewmodel.ext.android.viewModel
 
 
 class MainActivity : AppCompatActivity() {
@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private lateinit var viewModel: MainActivityViewModel
+    private val viewModel: MainActivityViewModel by viewModel()
     private lateinit var adapter: FollowersAdapter
     private var loginUser: String? = ""
     private var number = 1
@@ -52,7 +52,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        viewModel = ViewModelProviders.of(this).get(MainActivityViewModel::class.java)
         initList()
         getArgs()
         initSearchView()
