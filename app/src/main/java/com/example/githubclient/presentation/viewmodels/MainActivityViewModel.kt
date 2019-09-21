@@ -25,9 +25,12 @@ class MainActivityViewModel(private val repository: Repository) : ViewModel() {
 
         val exceptionHandler = CoroutineExceptionHandler { _, throwable -> loadInfoError(throwable) }
         viewModelScope.launch(exceptionHandler) {
-            val userResult = withContext(Dispatchers.IO) { repository.getUserInfo(login) }
-            val followersResult =
-                withContext(Dispatchers.IO) { repository.getUserFollowers(login, loadingPage) }
+            val userAsync = async(Dispatchers.IO) { repository.getUserInfo(login) }
+            val followersAsync = async(Dispatchers.IO) {
+                repository.getUserFollowers(login, loadingPage)
+            }
+            val userResult = userAsync.await()
+            val followersResult = followersAsync.await()
             liveData.value = ResponseResult.ShowUserInfo(userResult)
             if (followersResult.isEmpty()) {
                 lastPage = true
